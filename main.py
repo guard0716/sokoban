@@ -1,99 +1,99 @@
 import pyxel
 
-SCREEN_WIDTH = 160
-SCREEN_HEIGHT = 120
-CHICK_INTERVAL = 15
-FRAME_RATE = 30
-
-#ひよころ生成クラス
-class Chick:
-    def __init__(self, x, y, life):
-        self.x = x
-        self.y = y
-        self.life = life
-        self.frame = 0
-        self.isAnim = False
-    
-    def update(self):
-        self.frame+=1
-
-        if self.frame % CHICK_INTERVAL == 0:
-            self.isAnim ^= True
-
-
-    def draw(self):
-        if self.isAnim:
-            pyxel.blt(self.x, self.y, 0, 32, 0, 16, 16, pyxel.COLOR_BLACK)
-        else:
-            pyxel.blt(self.x, self.y, 0, 48, 0, 16, 16, pyxel.COLOR_BLACK)
-        
-        pyxel.text(self.x + 8, self.y + 8, f"{self.life}", pyxel.COLOR_RED)
-
-    def isLifeCycle(self):
-        if self.frame > 90:#生存
-            return 1       
-        elif self.life == 0:#死亡
-            return 2
-        else:
-            return 0
-        
-    def damage(self):
-        self.life -= 1
-
-
-class App:
+class Sokoban:
     def __init__(self):
-        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="ひよころくりっく")
+        pyxel.init(160, 160, title="ひよころぷっしゅ")  # 10x10マスを16x16ピクセルで表示
         pyxel.load("my_resource.pyxres")
-        self.chicks = []
-        self.score = 0
-        self.level = 1
-        self.time = 50
-        pyxel.mouse(True)
+        self.TILE_SIZE = 16
+        self.GRID_SIZE = 10
+        # マップ: 0=空, 1=壁, 2=プレイヤー, 3=障害物, 4=ゴール, 5=ボール
+        self.map = [
+            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 3, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 5, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 3, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+        ]
+        self.player_x, self.player_y = 0, 0  # プレイヤーの初期位置
+        self.game_cleared = False
         pyxel.run(self.update, self.draw)
 
     def update(self):
-        if pyxel.btnp(pyxel.KEY_ESCAPE):
-            pyxel.quit()
+        if self.game_cleared:
+            return
 
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-            for chick in self.chicks:
-                if chick.x <= pyxel.mouse_x <= chick.x + 16 and chick.y <= pyxel.mouse_y <= chick.y + 16:
-                    chick.damage()
+        # プレイヤー移動
+        dx, dy = 0, 0
+        if pyxel.btnp(pyxel.KEY_UP):
+            dy = -1
+        elif pyxel.btnp(pyxel.KEY_DOWN):
+            dy = 1
+        elif pyxel.btnp(pyxel.KEY_LEFT):
+            dx = -1
+        elif pyxel.btnp(pyxel.KEY_RIGHT):
+            dx = 1
 
-        if pyxel.frame_count % FRAME_RATE == 0:
-            self.chicks.append(Chick(pyxel.rndi(0, SCREEN_WIDTH - 16), pyxel.rndi(20, SCREEN_HEIGHT - 16), 2 + self.level))
-            self.time -= 1
+        if dx != 0 or dy != 0:
+            new_x, new_y = self.player_x + dx, self.player_y + dy
+            # マップ範囲内かチェック
+            if 0 <= new_x < self.GRID_SIZE and 0 <= new_y < self.GRID_SIZE:
+                # 移動先が空(0)またはゴール(4)の場合
+                if self.map[new_y][new_x] in [0, 4]:
+                    self.map[self.player_y][self.player_x] = 0
+                    self.player_x, self.player_y = new_x, new_y
+                    self.map[new_y][new_x] = 2
+                # 移動先が障害物(3)の場合
+                elif self.map[new_y][new_x] == 3:
+                    # 障害物の先の座標
+                    next_x, next_y = new_x + dx, new_y + dy
+                    # 先が範囲内で空(0)またはゴール(4)の場合、障害物を押す
+                    if (0 <= next_x < self.GRID_SIZE and 0 <= next_y < self.GRID_SIZE and
+                        self.map[next_y][next_x] in [0, 4]):
+                        self.map[self.player_y][self.player_x] = 0
+                        self.map[new_y][new_x] = 2
+                        self.map[next_y][next_x] = 3
+                        self.player_x, self.player_y = new_x, new_y
+                elif self.map[new_y][new_x] == 5:
+                    # 障害物の先の座標
+                    next_x, next_y = new_x + dx, new_y + dy
+                    # 先が範囲内で空(0)またはゴール(4)の場合、障害物を押す
+                    if (0 <= next_x < self.GRID_SIZE and 0 <= next_y < self.GRID_SIZE and
+                        self.map[next_y][next_x] in [0, 4]):
+                        self.map[self.player_y][self.player_x] = 0
+                        self.map[new_y][new_x] = 2
+                        self.map[next_y][next_x] = 5
+                        self.player_x, self.player_y = new_x, new_y
 
-        for chick in self.chicks.copy():
-            chick.update()
-            if chick.isLifeCycle() == 1:
-                self.chicks.remove(chick)
-            elif chick.isLifeCycle() == 2:
-                self.score += 1
-                self.chicks.remove(chick)
 
-        self.level = 1 + (self.score // 10)
+        # ゴール判定
+        if self.map[9][9] == 5:
+            self.game_cleared = True
 
     def draw(self):
-        pyxel.cls(pyxel.COLOR_DARK_BLUE)
-        if self.time <= 0:
-            pyxel.text(SCREEN_WIDTH // 2 - 15, SCREEN_HEIGHT // 2, "Game Over", pyxel.COLOR_YELLOW)
-            pyxel.text(SCREEN_WIDTH // 2 - 15, SCREEN_HEIGHT // 2 + 10, f"score:{self.score}", pyxel.COLOR_WHITE)
+        pyxel.cls(pyxel.COLOR_DARK_BLUE)  # 画面クリア
+        for y in range(self.GRID_SIZE):
+            for x in range(self.GRID_SIZE):
+                tile = self.map[y][x]
+                pixel_x, pixel_y = x * self.TILE_SIZE, y * self.TILE_SIZE
+                if tile == 0:  # 空
+                    pyxel.rect(pixel_x, pixel_y, self.TILE_SIZE, self.TILE_SIZE, pyxel.COLOR_DARK_BLUE)
+                elif tile == 1:  # 壁
+                    pyxel.rect(pixel_x, pixel_y, self.TILE_SIZE, self.TILE_SIZE, 8)
+                elif tile == 2:  # プレイヤー
+                    pyxel.blt(pixel_x, pixel_y, 0, 16, 0, 16, 16, pyxel.COLOR_BLACK)
+                elif tile == 3:  # 障害物
+                    pyxel.rect(pixel_x, pixel_y, self.TILE_SIZE, self.TILE_SIZE, 6)
+                elif tile == 4:  # ゴール
+                    pyxel.blt(pixel_x, pixel_y, 0, 32, 16, 16, 16, pyxel.COLOR_BLACK)
+                elif tile == 5:  # ボール
+                    pyxel.blt(pixel_x, pixel_y, 0, 0, 16, 16, 16, pyxel.COLOR_BLACK)
 
-        elif self.time > 0:
-            #ひよころ
-            for chick in self.chicks:
-                chick.draw()
+        if self.game_cleared:
+            pyxel.text(50, 80, "Game Cleared!", 10)
 
-            #スコア
-            pyxel.text(10, 0, f"score:{self.score}", pyxel.COLOR_WHITE)
-            #レベル
-            pyxel.text(60, 0, f"level:{self.level}", pyxel.COLOR_WHITE)
-            #タイム
-            pyxel.text(120, 0, f"time:{self.time}", pyxel.COLOR_WHITE)
-
-            #ひなころ
-            #pyxel.blt(pyxel.mouse_x - 8, SCREEN_HEIGHT - 16, 0, 16, 0, 16, 16, pyxel.COLOR_BLACK)
-
-App()
+Sokoban()
