@@ -8,19 +8,20 @@ class Sokoban:
         self.GRID_SIZE = 10
         # マップ: 0=空, 1=壁, 2=プレイヤー, 3=障害物, 4=ゴール, 5=ボール
         self.map = [
-            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 3, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 5, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 3, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 2, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 3, 3, 3, 3, 3, 3, 0, 3, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 5, 0, 0, 0, 1],
+            [1, 0, 3, 3, 3, 3, 3, 3, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 3, 3, 3, 3, 3, 3, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 4, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ]
-        self.player_x, self.player_y = 0, 0  # プレイヤーの初期位置
+        self.player_x, self.player_y = 1, 1  # プレイヤーの初期位置
         self.game_cleared = False
+        self.player_news = 0
         pyxel.run(self.update, self.draw)
 
     def update(self):
@@ -31,12 +32,16 @@ class Sokoban:
         dx, dy = 0, 0
         if pyxel.btnp(pyxel.KEY_UP):
             dy = -1
+            self.player_news = 1
         elif pyxel.btnp(pyxel.KEY_DOWN):
             dy = 1
+            self.player_news = 0
         elif pyxel.btnp(pyxel.KEY_LEFT):
             dx = -1
+            self.player_news = 2
         elif pyxel.btnp(pyxel.KEY_RIGHT):
             dx = 1
+            self.player_news = 3
 
         if dx != 0 or dy != 0:
             new_x, new_y = self.player_x + dx, self.player_y + dy
@@ -71,23 +76,30 @@ class Sokoban:
 
 
         # ゴール判定
-        if self.map[9][9] == 5:
+        if self.map[8][8] == 5:
             self.game_cleared = True
 
     def draw(self):
-        pyxel.cls(pyxel.COLOR_DARK_BLUE)  # 画面クリア
+        pyxel.cls(pyxel.COLOR_GREEN)  # 画面クリア
         for y in range(self.GRID_SIZE):
             for x in range(self.GRID_SIZE):
                 tile = self.map[y][x]
                 pixel_x, pixel_y = x * self.TILE_SIZE, y * self.TILE_SIZE
                 if tile == 0:  # 空
-                    pyxel.rect(pixel_x, pixel_y, self.TILE_SIZE, self.TILE_SIZE, pyxel.COLOR_DARK_BLUE)
+                    pyxel.rect(pixel_x, pixel_y, self.TILE_SIZE, self.TILE_SIZE, pyxel.COLOR_GREEN)
                 elif tile == 1:  # 壁
-                    pyxel.rect(pixel_x, pixel_y, self.TILE_SIZE, self.TILE_SIZE, 8)
+                    pyxel.blt(pixel_x, pixel_y, 0, 0, 48, 16, 16, pyxel.COLOR_BLACK)
                 elif tile == 2:  # プレイヤー
-                    pyxel.blt(pixel_x, pixel_y, 0, 16, 0, 16, 16, pyxel.COLOR_BLACK)
+                    if self.player_news == 1:#上向き
+                        pyxel.blt(pixel_x, pixel_y, 0, 16, 32, 16, 16, pyxel.COLOR_BLACK)
+                    elif self.player_news == 2:#左向き
+                        pyxel.blt(pixel_x, pixel_y, 0, 0, 32, 16, 16, pyxel.COLOR_BLACK)
+                    elif self.player_news == 3:#右向き
+                        pyxel.blt(pixel_x, pixel_y, 0, 48, 32, 16, 16, pyxel.COLOR_BLACK)
+                    else :#下向き
+                        pyxel.blt(pixel_x, pixel_y, 0, 32, 32, 16, 16, pyxel.COLOR_BLACK)
                 elif tile == 3:  # 障害物
-                    pyxel.rect(pixel_x, pixel_y, self.TILE_SIZE, self.TILE_SIZE, 6)
+                    pyxel.blt(pixel_x, pixel_y, 0, 48, 16, 16, 16, pyxel.COLOR_BLACK)
                 elif tile == 4:  # ゴール
                     pyxel.blt(pixel_x, pixel_y, 0, 32, 16, 16, 16, pyxel.COLOR_BLACK)
                 elif tile == 5:  # ボール
