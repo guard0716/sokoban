@@ -29,7 +29,7 @@ class Sokoban:
     def update(self):
         if self.state == "TITLE":
             # タイトル画面：任意のキーでゲーム画面へ
-            if pyxel.btnp(pyxel.KEY_SPACE):
+            if pyxel.btnp(pyxel.KEY_UP) or pyxel.btnp(pyxel.KEY_DOWN) or pyxel.btnp(pyxel.KEY_RIGHT) or pyxel.btnp(pyxel.KEY_LEFT):
                 self.initValue("STAGE")
 
         elif self.state == "GAME_OVER":
@@ -102,15 +102,15 @@ class Sokoban:
         pyxel.cls(pyxel.COLOR_GREEN)  # 画面クリア
 
         if self.state == "TITLE":
-            pyxel.text(50, 50, "Title Screen", 7)
-            pyxel.text(40, 70, "Press Enter", 7)
+            pyxel.text(50, 70, "Hiyokoro Push!", 7)
+            pyxel.text(50, 80, "Press Any Arrow", 7)
 
         elif self.state == "GAME_OVER":
-            pyxel.text(40, 50, "Game Cleared!", 10)
-            pyxel.text(30, 70, "Back to title in 5s", 7)
+            pyxel.text(50, 70, "Game Cleared!", 10)
+            pyxel.text(50, 80, "Back to title in 5s", 7)
 
         elif self.state == "STAGE":
-            pyxel.text(40, 50, F"Stage {self.stage}", 10)
+            pyxel.text(60, 75, F"Stage {self.stage}", 10)
 
         elif self.state == "GAME":
             for y in range(self.GRID_SIZE):
