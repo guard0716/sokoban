@@ -1,4 +1,5 @@
 import pyxel
+import copy
 
 class Sokoban:
     def __init__(self):
@@ -22,9 +23,19 @@ class Sokoban:
             [1, 0, 0, 0, 0, 0, 0, 4, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1]
         ]
+        self.map_history = [copy.deepcopy(self.map)]  # 初期マップを保存
         self.player_x, self.player_y = 1, 1  # プレイヤーの初期位置
         self.player_news = 0
         pyxel.run(self.update, self.draw)
+
+    def find_player(self):
+        #マップからプレイヤーの位置を検索
+        for y in range(9):
+            for x in range(9):
+                if self.map[y][x] == 2:
+                    self.player_x = x
+                    self.player_y = y
+                    return
 
     def update(self):
         if self.state == "TITLE":
@@ -45,6 +56,12 @@ class Sokoban:
                 self.initValue("GAME")
 
         elif self.state == "GAME":
+
+            # 一手戻る（Zキー）
+            if pyxel.btnp(pyxel.KEY_Z) and len(self.map_history) > 1:
+                self.map_history.pop()  # 最新の状態を削除
+                self.map = copy.deepcopy(self.map_history[-1])  # 直前の状態を復元
+                self.find_player()            
 
             # プレイヤー移動
             dx, dy = 0, 0
@@ -91,7 +108,7 @@ class Sokoban:
                             self.map[new_y][new_x] = 2
                             self.map[next_y][next_x] = 5
                             self.player_x, self.player_y = new_x, new_y
-
+                self.map_history.append(copy.deepcopy(self.map))  # 状態保存
 
             # ゴール判定
             if self.map[7][7] == 5:
@@ -159,6 +176,7 @@ class Sokoban:
 
         elif state == "STAGE":
             self.state = "STAGE"
+            self.map_history.clear()
             if self.stage == 1:
                 self.map = [
                     [1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -226,5 +244,8 @@ class Sokoban:
 
             elif self.stage == 6:
                 self.initValue("GAME_OVER")
+
+            self.map_history = [copy.deepcopy(self.map)]  # 初期マップを保存
+
 
 Sokoban()
